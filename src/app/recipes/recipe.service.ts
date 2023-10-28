@@ -20,6 +20,9 @@ export class RecipeService{
         ])
       ];
 
+      getRecipe(id : number){
+        return this.recipes[id];
+      }
       getRecipes(){
         return this.recipes.slice(); //To not share the reference of object
       }
