@@ -19,6 +19,7 @@ export interface AuthResponseData {
 export class AuthService {
   // user = new Subject<UserModel>();
   user = new BehaviorSubject<UserModel>(null);
+  private tokenExpriationTimer: any;
 
   constructor(private httpClient: HttpClient, private router: Router) {}
 
@@ -73,10 +74,11 @@ export class AuthService {
     email: string,
     localId: string,
     token: string,
-    expiresIn: string
+    expiresIn: any
   ) {
     const user = new UserModel(email, localId, token, expiresIn);
     this.user.next(user);
+    this.autoLogout(expiresIn * 1000);
     localStorage.setItem("userData", JSON.stringify(user));
   }
 
@@ -106,8 +108,45 @@ export class AuthService {
     return throwError(errorMessage);
   }
 
+  autoLogin() {
+    const userData: {
+      email: string;
+      id: string;
+      _token: string;
+      _tokenExpirationDate: string;
+    } = JSON.parse(localStorage.getItem("userData"));
+    if (!userData) {
+      return;
+    }
+
+    const loadedUser = new UserModel(
+      userData.email,
+      userData.id,
+      userData._token,
+      userData._tokenExpirationDate
+    );
+    if (loadedUser.token) {
+      this.user.next(loadedUser);
+      const expirationDuration =
+        new Date(userData._tokenExpirationDate).getTime() -
+        new Date().getTime();
+      this.autoLogout(expirationDuration);
+    }
+  }
+
+  autoLogout(expirationDuration: number) {
+    this.tokenExpriationTimer = setTimeout(() => {
+      this.logout();
+    }, expirationDuration);
+  }
+
   logout() {
     this.user.next(null);
     this.router.navigate(["/auth"]);
+    localStorage.removeItem("userData");
+    if (this.tokenExpriationTimer) {
+      clearTimeout(this.tokenExpriationTimer);
+    }
+    this.tokenExpriationTimer = null;
   }
 }
