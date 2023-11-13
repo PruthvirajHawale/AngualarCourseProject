@@ -1,86 +1,113 @@
 import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { catchError, tap } from "rxjs/operators";
-import { Subject, throwError } from "rxjs";
+import { BehaviorSubject, Subject, throwError } from "rxjs";
 import { UserModel } from "./user.model";
+import { Router } from "@angular/router";
 
-export interface AuthResponseData{
-    kind : string,
-    idToken : string,
-    email : string,
-    refreshToken : string,
-    expiresIn : string,
-    localId : string,
-    registered ?: boolean         //for login response format
+export interface AuthResponseData {
+  kind: string;
+  idToken: string;
+  email: string;
+  refreshToken: string;
+  expiresIn: string;
+  localId: string;
+  registered?: boolean; //for login response format
 }
 
-@Injectable({providedIn: 'root'})
-export class AuthService{
-    user = new Subject<UserModel>();
+@Injectable({ providedIn: "root" })
+export class AuthService {
+  // user = new Subject<UserModel>();
+  user = new BehaviorSubject<UserModel>(null);
 
-    constructor(private httpClient : HttpClient){}
-    
-    signUp(email : string, password: string){
-        return this.httpClient.post<AuthResponseData>(
-            'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyBcRZKBbIwsDnRA6SznVfzh0DWfBiDUIC0',
-            {
-                email : email,
-                password : password,
-                returnSecureToken : true
-            }
-        ).pipe(catchError(this.handleError), 
-            tap(resData => {
-                this.handleAuthentication(resData.email, resData.localId, resData.idToken,resData.expiresIn)
-            })
-        );
-    }
+  constructor(private httpClient: HttpClient, private router: Router) {}
 
-    login(email : string , password : string){
-        return this.httpClient.post<AuthResponseData>(
-            'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyBcRZKBbIwsDnRA6SznVfzh0DWfBiDUIC0',
-            {
-                email : email,
-                password : password,
-                returnSecureToken : true
-            }
-        ).pipe(catchError(this.handleError),tap(resData => {
-            this.handleAuthentication(resData.email, resData.localId, resData.idToken,resData.expiresIn)
-        }));
-    }
+  signUp(email: string, password: string) {
+    return this.httpClient
+      .post<AuthResponseData>(
+        "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyBcRZKBbIwsDnRA6SznVfzh0DWfBiDUIC0",
+        {
+          email: email,
+          password: password,
+          returnSecureToken: true,
+        }
+      )
+      .pipe(
+        catchError(this.handleError),
+        tap((resData) => {
+          this.handleAuthentication(
+            resData.email,
+            resData.localId,
+            resData.idToken,
+            resData.expiresIn
+          );
+        })
+      );
+  }
 
-    private handleAuthentication(email:string, localId:string,token:string,expiresIn:string){
-        const user = new UserModel(
-            email, 
-            localId, 
-            token,
-            expiresIn
-            );
-            this.user.next(user);
-    }
+  login(email: string, password: string) {
+    return this.httpClient
+      .post<AuthResponseData>(
+        "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyBcRZKBbIwsDnRA6SznVfzh0DWfBiDUIC0",
+        {
+          email: email,
+          password: password,
+          returnSecureToken: true,
+        }
+      )
+      .pipe(
+        catchError(this.handleError),
+        tap((resData) => {
+          console.log(resData);
+          this.handleAuthentication(
+            resData.email,
+            resData.localId,
+            resData.idToken,
+            resData.expiresIn
+          );
+        })
+      );
+  }
 
-    private handleError(errorRes : HttpErrorResponse){
-        console.log(errorRes);
-        let errorMessage = 'An unknown error has occured'
-            if(!errorRes.error || !errorRes.error.error){
-                return throwError(errorMessage);
-            }
-            switch(errorRes.error.error.message){
-                case 'EMAIL_EXISTS':
-                    errorMessage = 'The email already exists';
-                    break;
-                case 'INVALID_PASSWORD':
-                    errorMessage = 'Invalid password';
-                    break;
-                case 'EMAIL_NOT_FOUND':
-                    errorMessage = 'Email not registered';
-                    break;
-                case 'EMAIL_EXISTS':
-                    errorMessage = 'Email already registered';
-                    break;
-                case 'INVALID_LOGIN_CREDENTIALS':
-                    errorMessage = 'Invalid Credentials'
-                    break;
-            }
-            return throwError(errorMessage);
+  private handleAuthentication(
+    email: string,
+    localId: string,
+    token: string,
+    expiresIn: string
+  ) {
+    const user = new UserModel(email, localId, token, expiresIn);
+    this.user.next(user);
+    localStorage.setItem("userData", JSON.stringify(user));
+  }
+
+  private handleError(errorRes: HttpErrorResponse) {
+    console.log(errorRes);
+    let errorMessage = "An unknown error has occured";
+    if (!errorRes.error || !errorRes.error.error) {
+      return throwError(errorMessage);
     }
+    switch (errorRes.error.error.message) {
+      case "EMAIL_EXISTS":
+        errorMessage = "The email already exists";
+        break;
+      case "INVALID_PASSWORD":
+        errorMessage = "Invalid password";
+        break;
+      case "EMAIL_NOT_FOUND":
+        errorMessage = "Email not registered";
+        break;
+      case "EMAIL_EXISTS":
+        errorMessage = "Email already registered";
+        break;
+      case "INVALID_LOGIN_CREDENTIALS":
+        errorMessage = "Invalid Credentials";
+        break;
+    }
+    return throwError(errorMessage);
+  }
+
+  logout() {
+    this.user.next(null);
+    this.router.navigate(["/auth"]);
+  }
 }
