@@ -8,6 +8,7 @@ import { AppRoutingModule } from "./app-routing.module";
 import { AlertComponent } from "./shared/alert/alert.component";
 import { CoreModule } from "./core.module";
 import { LoggingService } from "./logging.service";
+import { ReactiveFormsModule } from "@angular/forms";
 
 @NgModule({
   declarations: [
@@ -16,7 +17,13 @@ import { LoggingService } from "./logging.service";
     DropdownDirective, // below this two imports are here because i was lazy enough to not complete the shared module videos
     AlertComponent,
   ],
-  imports: [BrowserModule, HttpClientModule, AppRoutingModule, CoreModule],
+  imports: [
+    BrowserModule,
+    HttpClientModule,
+    AppRoutingModule,
+    CoreModule,
+    ReactiveFormsModule,
+  ],
   bootstrap: [AppComponent],
   // providers: [LoggingService], //Same instance will be used across app, it is declared in app module
   providers: [LoggingService], //Different instance will be used because same service is provided inside the shopping-list
