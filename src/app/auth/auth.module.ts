@@ -10,7 +10,7 @@ import { LoadingSpinnerComponent } from "../shared/loading-spinner/loading-spinn
   imports: [
     CommonModule,
     FormsModule,
-    RouterModule.forChild([{ path: "auth", component: AuthComponent }]),
+    RouterModule.forChild([{ path: "", component: AuthComponent }]),
   ],
   exports: [RouterModule],
 })

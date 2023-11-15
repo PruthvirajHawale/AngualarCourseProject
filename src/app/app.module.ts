@@ -6,9 +6,8 @@ import { HeaderComponent } from "./header/header.component";
 import { DropdownDirective } from "./shared/dropdown.directive";
 import { AppRoutingModule } from "./app-routing.module";
 import { AlertComponent } from "./shared/alert/alert.component";
-import { ShoppingListModule } from "./shopping-list/shopping-list.module";
 import { CoreModule } from "./core.module";
-import { AuthModule } from "./auth/auth.module";
+import { LoggingService } from "./logging.service";
 
 @NgModule({
   declarations: [
@@ -17,14 +16,10 @@ import { AuthModule } from "./auth/auth.module";
     DropdownDirective, // below this two imports are here because i was lazy enough to not complete the shared module videos
     AlertComponent,
   ],
-  imports: [
-    BrowserModule,
-    HttpClientModule,
-    AppRoutingModule,
-    ShoppingListModule,
-    CoreModule,
-    AuthModule,
-  ],
+  imports: [BrowserModule, HttpClientModule, AppRoutingModule, CoreModule],
   bootstrap: [AppComponent],
+  // providers: [LoggingService], //Same instance will be used across app, it is declared in app module
+  providers: [LoggingService], //Different instance will be used because same service is provided inside the shopping-list
+  //  module and that module is load lazily
 })
 export class AppModule {}
